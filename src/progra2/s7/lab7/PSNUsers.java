@@ -89,7 +89,46 @@ public class PSNUsers {
         return true;
     }
     
-    
+    public boolean addTrophieTo(String username, String trophyGame, String trophyName, Trophy type, byte[] trophyImageBytes) throws IOException {
+
+        long posPuntos = users.search(username);
+        if (posPuntos == -1) {
+            return false;
+        }
+        
+        archivoTrophies.seek(archivoTrophies.length());
+        archivoTrophies.writeUTF(username);
+        archivoTrophies.writeUTF(type.name());
+        archivoTrophies.writeUTF(trophyGame);
+        archivoTrophies.writeUTF(trophyName);
+        String fechaTexto = LocalDate.now().toString();
+        archivoTrophies.writeUTF(fechaTexto);
+        
+        if (trophyImageBytes != null) {
+            archivoTrophies.writeInt(trophyImageBytes.length);
+            archivoTrophies.write(trophyImageBytes);
+        } else {
+            archivoTrophies.writeInt(0);
+        }
+        
+        archivo.seek(posPuntos);
+        int puntos = archivo.readInt();
+        int contadorTrofeos = archivo.readInt();
+        boolean activo = archivo.readBoolean();
+        
+        if (!activo) {
+            return false;
+        }
+        
+        puntos += type.points;
+        contadorTrofeos++;
+        
+        archivo.seek(posPuntos);
+        archivo.writeInt(puntos);
+        archivo.writeInt(contadorTrofeos);
+        
+        return true;
+    }
     
     
 }

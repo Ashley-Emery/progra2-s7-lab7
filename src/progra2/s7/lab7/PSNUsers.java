@@ -12,7 +12,6 @@ package progra2.s7.lab7;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.EOFException;
-import java.io.FileNotFoundException;
 
 import java.time.LocalDate;
 
@@ -30,7 +29,7 @@ public class PSNUsers {
         archivo = new RandomAccessFile(ARCHIVO_USUARIOS, "rw");
         archivoTrophies = new RandomAccessFile(ARCHIVO_TROFEOS, "rw");
         users = new HashTable();
-        //reloadHashTable();
+        reloadHashTable();
     }
     
     private void reloadHashTable() throws IOException {
@@ -199,6 +198,38 @@ public class PSNUsers {
         }
 
         return sb.toString();
+    }
+    
+    public byte[] getUltimaImagenTrofeo(String username) throws IOException {
+        byte[] ultimaImagen = null;
+
+        archivoTrophies.seek(0);
+
+        try {
+            while (true) {
+                String uTrofeo = archivoTrophies.readUTF();
+                String tipo = archivoTrophies.readUTF();
+                String juego = archivoTrophies.readUTF();
+                String nombre = archivoTrophies.readUTF();
+                String fecha = archivoTrophies.readUTF();
+                int lenImagen = archivoTrophies.readInt();
+
+                byte[] imagenActual = null;
+                if (lenImagen > 0) {
+                    imagenActual = new byte[lenImagen];
+                    archivoTrophies.readFully(imagenActual);
+                }
+
+                if (uTrofeo.equals(username)) {
+                    // nos quedamos con la última imagen encontrada
+                    ultimaImagen = imagenActual;
+                }
+            }
+        } catch (EOFException e) {
+            // fin de archivo, no pasa nada
+        }
+
+        return ultimaImagen;
     }
     
     public void close() {

@@ -221,12 +221,11 @@ public class PSNUsers {
                 }
 
                 if (uTrofeo.equals(username)) {
-                    // nos quedamos con la última imagen encontrada
                     ultimaImagen = imagenActual;
                 }
             }
         } catch (EOFException e) {
-            // fin de archivo, no pasa nada
+            System.out.println("Fin del archivo de trofeos alcanzado mientras se buscaba la última imagen.");
         }
 
         return ultimaImagen;

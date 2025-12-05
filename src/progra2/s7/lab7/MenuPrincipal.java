@@ -7,6 +7,7 @@ package progra2.s7.lab7;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.io.IOException;
 
 /**
  *
@@ -15,6 +16,7 @@ import java.awt.*;
 public class MenuPrincipal extends JFrame {
 
     private JPanel centerPanel;
+    private PSNUsers psn;
 
     public MenuPrincipal() {
         setTitle("PSN - Panel Principal");
@@ -22,6 +24,15 @@ public class MenuPrincipal extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
+
+        try {
+            psn = new PSNUsers();
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al inicializar datos: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }
 
         JPanel left = new JPanel();
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
@@ -35,7 +46,7 @@ public class MenuPrincipal extends JFrame {
         left.add(lblTitle);
         left.add(Box.createVerticalStrut(12));
 
-        JButton btnAgregar = new JButton("Registrar usuario");
+        JButton btnAgregar = new JButton("Agregar usuario");
         JButton btnDesactivar = new JButton("Desactivar usuario");
         JButton btnAgregarTrofeo = new JButton("Agregar trofeo");
         JButton btnInfo = new JButton("Mostrar info de jugador");
@@ -64,11 +75,14 @@ public class MenuPrincipal extends JFrame {
         showWelcome();
         add(centerPanel, BorderLayout.CENTER);
 
-        btnAgregar.addActionListener(e -> setCenter(AddUserPanel.create()));
-        btnDesactivar.addActionListener(e -> setCenter(DesactivarUserPanel.create()));
-        btnAgregarTrofeo.addActionListener(e -> setCenter(AddTrophyPanel.create()));
-        btnInfo.addActionListener(e -> setCenter(InfoPlayerPanel.create()));
-        btnSalir.addActionListener(e -> dispose());
+        btnAgregar.addActionListener(e -> setCenter(AddUserPanel.create(psn)));
+        btnDesactivar.addActionListener(e -> setCenter(DesactivarUserPanel.create(psn)));
+        btnAgregarTrofeo.addActionListener(e -> setCenter(AddTrophyPanel.create(psn)));
+        btnInfo.addActionListener(e -> setCenter(InfoPlayerPanel.create(psn)));
+        btnSalir.addActionListener(e -> {
+            psn.close();
+            dispose();
+        });
     }
 
     private void setCenter(JPanel p) {
@@ -89,7 +103,4 @@ public class MenuPrincipal extends JFrame {
         centerPanel.repaint();
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new MenuPrincipal().setVisible(true));
-    }
 }

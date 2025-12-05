@@ -5,9 +5,8 @@
 package progra2.s7.lab7;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.io.File;
+import java.io.*;
 
 /**
  *
@@ -16,7 +15,7 @@ import java.io.File;
 
 public class AddTrophyPanel {
 
-    public static JPanel create() {
+    public static JPanel create(PSNUsers psn) {
         JPanel root = new JPanel(new BorderLayout(18, 18));
         root.setBackground(Color.WHITE);
         root.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
@@ -74,6 +73,10 @@ public class AddTrophyPanel {
         grid.add(lblTipo, c);
 
         c.gridx = 1;
+        JComboBox<Trophy> comboTipo = new JComboBox<>(Trophy.values());
+        comboTipo.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        comboTipo.setPreferredSize(new Dimension(240, 36));
+        grid.add(comboTipo, c);
 
         c.gridx = 0;
         c.gridy = 4;
@@ -101,6 +104,59 @@ public class AddTrophyPanel {
         grid.add(btnAgregar, c);
 
         root.add(grid, BorderLayout.CENTER);
+
+        final byte[][] imagenBytes = new byte[1][];
+        btnSeleccionar.addActionListener(ae -> {
+            JFileChooser fc = new JFileChooser();
+            int res = fc.showOpenDialog(root);
+            if (res == JFileChooser.APPROVE_OPTION) {
+                File f = fc.getSelectedFile();
+                lblNombreArchivo.setText(f.getName());
+                try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                     FileInputStream fis = new FileInputStream(f)) {
+
+                    byte[] buffer = new byte[4096];
+                    int r;
+                    while ((r = fis.read(buffer)) != -1) baos.write(buffer, 0, r);
+                    imagenBytes[0] = baos.toByteArray();
+
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(root, "Error leyendo la imagen: " + ex.getMessage(),
+                            "Error I/O", JOptionPane.ERROR_MESSAGE);
+                    imagenBytes[0] = null;
+                    lblNombreArchivo.setText("Ningún archivo seleccionado");
+                }
+            }
+        });
+
+        btnAgregar.addActionListener(ev -> {
+            String username = txtUser.getText().trim();
+            String juego = txtJuego.getText().trim();
+            String nombre = txtNombre.getText().trim();
+            Trophy tipo = (Trophy) comboTipo.getSelectedItem();
+
+            if (username.isEmpty() || juego.isEmpty() || nombre.isEmpty()) {
+                JOptionPane.showMessageDialog(root, "Complete todos los campos obligatorios.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            try {
+                boolean ok = psn.addTrophieTo(username, juego, nombre, tipo, imagenBytes[0]);
+                if (ok) {
+                    JOptionPane.showMessageDialog(root, "Trofeo agregado correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    txtUser.setText("");
+                    txtJuego.setText("");
+                    txtNombre.setText("");
+                    comboTipo.setSelectedIndex(0);
+                    imagenBytes[0] = null;
+                    lblNombreArchivo.setText("Ningún archivo seleccionado");
+                } else {
+                    JOptionPane.showMessageDialog(root, "No se pudo agregar trofeo. Usuario inexistente o inactivo.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(root, "Error al agregar trofeo:\n" + ex.getMessage(), "Error I/O", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         return root;
     }

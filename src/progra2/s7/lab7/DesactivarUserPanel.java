@@ -6,13 +6,15 @@ package progra2.s7.lab7;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
+
 /**
- *
+ * 
  * @author esteb
  */
 public class DesactivarUserPanel {
 
-    public static JPanel create() {
+    public static JPanel create(PSNUsers psn) {
         JPanel root = new JPanel(new BorderLayout(18, 18));
         root.setBackground(Color.WHITE);
         root.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
@@ -48,6 +50,25 @@ public class DesactivarUserPanel {
         form.add(btnDesactivar, c);
 
         root.add(form, BorderLayout.CENTER);
+
+        btnDesactivar.addActionListener(ev -> {
+            String username = txtUsername.getText().trim();
+            if (username.isEmpty()) {
+                JOptionPane.showMessageDialog(root, "Ingrese un username.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            try {
+                boolean ok = psn.deactivateUser(username);
+                if (ok) {
+                    JOptionPane.showMessageDialog(root, "Usuario desactivado correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    txtUsername.setText("");
+                } else {
+                    JOptionPane.showMessageDialog(root, "Usuario no encontrado o ya inactivo.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(root, "Error al desactivar usuario:\n" + ex.getMessage(), "Error I/O", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         return root;
     }

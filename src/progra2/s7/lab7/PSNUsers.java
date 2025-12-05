@@ -92,6 +92,7 @@ public class PSNUsers {
     public boolean addTrophieTo(String username, String trophyGame, String trophyName, Trophy type, byte[] trophyImageBytes) throws IOException {
 
         long posPuntos = users.search(username);
+        
         if (posPuntos == -1) {
             return false;
         }
@@ -130,5 +131,100 @@ public class PSNUsers {
         return true;
     }
     
+    public String playerInfo(String username) throws IOException {
+        
+        String usernameLeido = null;
+        int puntos = 0;
+        int contadorTrofeos = 0;
+        boolean activo = false;
+        
+        archivo.seek(0);
+        
+        try {
+            while (true) {
+                String u = archivo.readUTF();
+                long posPuntos = archivo.getFilePointer();
+                int pts = archivo.readInt();
+                int cont = archivo.readInt();
+                boolean act = archivo.readBoolean();
+                
+                if (u.equals(username)) {
+                    usernameLeido = u;
+                    puntos = pts;
+                    contadorTrofeos = cont;
+                    activo = act;
+                    break;
+                }
+            }
+        } catch (EOFException e) {
+            System.out.println("Fin del archivo de usuarios alcanzado durante busqueda");
+        }
+        
+        if (usernameLeido == null || !activo) {
+            return "Usuario no encontrado o inactivo";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Usuario: ").append(usernameLeido).append("\n");
+        sb.append("Puntos acumulados: ").append(puntos).append("\n");
+        sb.append("Cantidad de trofeos: ").append(contadorTrofeos).append("\n");
+        sb.append("Estado: ").append(activo ? "ACTIVO" : "INACTIVO").append("\n\n");
+
+        sb.append("TROFEOS:\n");
+        
+        archivoTrophies.seek(0);
+        
+        try {
+            while (true) {
+                String uTrofeo = archivoTrophies.readUTF();
+                String tipo = archivoTrophies.readUTF();
+                String juego = archivoTrophies.readUTF();
+                String nombre = archivoTrophies.readUTF();
+                String fecha = archivoTrophies.readUTF();
+                int lenImagen = archivoTrophies.readInt();
+
+                if (lenImagen > 0) {
+                    archivoTrophies.skipBytes(lenImagen);
+                }
+
+                if (uTrofeo.equals(username)) {
+                    sb.append(fecha).append(" - ")
+                      .append(tipo).append(" - ")
+                      .append(juego).append(" - ")
+                      .append(nombre).append(" - [IMAGEN]\n");
+                }
+            }
+        } catch (EOFException e) {
+            System.out.println("Fin del archivo de trofeos alcanzado");
+        }
+
+        return sb.toString();
+    }
+    
+    public void close() {
+
+        try {
+            if (archivo != null) {
+                archivo.close();
+            }
+
+        } catch (IOException e) {
+
+            System.err.println("Error al cerrar el archivo de usuarios: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            if (archivoTrophies != null) {
+                archivoTrophies.close();
+            }
+
+        } catch (IOException e) {
+
+            System.err.println("Error al cerrar el archivo de trofeos: " + e.getMessage());
+            e.printStackTrace();
+
+        }
+    }
     
 }
